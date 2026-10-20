@@ -4,7 +4,18 @@ Aplikasi web untuk mencatat transaksi, memantau stok, mengelola invoice, dan men
 
 **🔗 Demo:** https://sepdiansyahdewa.github.io/erp-divisi-pabrik/
 
-![Halaman login](docs/login.png)
+## Tampilan
+
+### Halaman login
+![Halaman login](docs/login.jpg)
+
+### Dashboard
+![Dashboard mode terang](docs/dashboard-light.jpg)
+![Dashboard mode gelap](docs/dashboard-dark.jpg)
+
+### Inventori
+![Daftar inventori](docs/inventory.jpg)
+![Tambah produk](docs/add-inventory.jpg)
 
 ## Fitur
 
@@ -14,6 +25,7 @@ Aplikasi web untuk mencatat transaksi, memantau stok, mengelola invoice, dan men
 - **Invoice & Kontak** — kelola pelanggan/pemasok dan status tagihan
 - **Laporan** — rekap keuangan siap ekspor
 - **Impor data** — unggah data dari file Excel/CSV
+- **Mode terang dan gelap**
 - **Login berbasis peran** — hak akses berbeda untuk Pemilik dan Kasir
 
 ## Teknologi
@@ -44,7 +56,7 @@ Hasilnya ada di folder `dist/`.
 
 ## Catatan
 
-Versi demo ini memakai data contoh dan menyimpan data di browser masing-masing pengguna. Login pada versi ini hanya untuk demonstrasi, bukan sistem keamanan produksi.
+Data disimpan di browser masing-masing pengguna. Login pada versi ini hanya untuk demonstrasi, bukan sistem keamanan produksi.
 
 ## Pembuat
 
