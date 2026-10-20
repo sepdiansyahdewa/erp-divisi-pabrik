@@ -131,8 +131,8 @@ const fill = (u, p) => {
   padding: 28px clamp(24px, 5vw, 64px) 0;
 }
 .brand-logo {
-  width: 85px;
-  height: 75px;
+  width: 95px;
+  height: 85px;
   object-fit: contain;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
 }
