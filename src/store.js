@@ -16,6 +16,7 @@ export const ACCOUNTS = ['Bank BCA', 'Bank BNI', 'Bank Mandiri', 'Bank BTN', 'GO
 export const PRODUCT_CATEGORIES = ['Sparepart', 'Jasa', 'Material', 'Kimia', 'Lainnya']
 export const UNITS = ['pcs', 'gr', 'box', 'kg', 'ltr', 'mm', 'ml', 'pail']
 export const CRO_LEVELS = ['CRO I', 'CRO II', 'CRO III', 'CRO IV', 'CRO V', 'CRO VI', 'CRO VII', 'CRO VIII', 'CRO IX', 'CRO X']
+export const PKS_LIST = ['CSB', 'DPN', 'WJT', 'JHS', 'EMA', 'KAT', 'BBU', 'MAL', 'TPU', 'RKA', 'TTI', 'BKU', 'CP1', 'CP2', 'LL', 'DA', 'WDBP', 'WHS', 'BH1', 'BH2', 'PJ', 'GAP', 'SMJL']
 
 /* ---------- data demo ---------- */
 function rng(seed) {
