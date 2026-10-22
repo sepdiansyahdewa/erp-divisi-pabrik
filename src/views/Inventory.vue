@@ -12,7 +12,6 @@ const q = ref('')
 const cat = ref('')
 const croF = ref('')
 const pksF = ref('')
-const croF = ref('')
 const onlyLow = ref(false)
 const isLow = (p) => p.stock <= p.minStock
 
@@ -96,15 +95,11 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
       <div class="row wrap" style="padding: 16px 18px">
         <div class="search"><Icon name="search" :size="16" /><input v-model="q" class="input" placeholder="Cari nama / SKU…" /></div>
         <select v-model="cat" class="select" style="width: 170px">
-        <select v-model="croF" class="select"><option value="">Semua CRO</option><option v-for="c in CRO_LEVELS" :key="c" :value="c">{{ c }}</option></select>
-        <select v-model="pksF" class="select"><option value="">Semua PKS</option><option v-for="p in PKS_LIST" :key="p" :value="p">{{ p }}</option></select>
-          <option value="">Semua kategori</option>
-          <option v-for="c in PRODUCT_CATEGORIES" :key="c">{{ c }}</option>
+  <option value="">Semua kategori</option>
+  <option v-for="c in PRODUCT_CATEGORIES" :key="c">{{ c }}</option>
         </select>
-        <div class="segmented">
-          <button :class="{ active: !onlyLow }" @click="onlyLow = false">Semua</button>
-          <button :class="{ active: onlyLow }" @click="onlyLow = true">Menipis</button>
-        </div>
+        <select v-model="croF" class="select" style="width: 170px"><option value="">Semua CRO</option><option v-for="c in CRO_LEVELS" :key="c" :value="c">{{ c }}</option></select>
+        <select v-model="pksF" class="select" style="width: 170px"><option value="">Semua PKS</option><option v-for="p in PKS_LIST" :key="p" :value="p">{{ p }}</option></select>
       </div>
       <DataTable :columns="columns" :rows="rows" :page-size="8" empty-text="Produk tidak ditemukan">
         <template #cell-name="{ row }">
