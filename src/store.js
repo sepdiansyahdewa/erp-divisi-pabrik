@@ -15,6 +15,7 @@ export const EXPENSE_CATEGORIES = [
 export const ACCOUNTS = ['Bank BCA', 'Bank BNI', 'Bank Mandiri', 'Bank BTN', 'GOPAY', 'OVO', ]
 export const PRODUCT_CATEGORIES = ['Sparepart', 'Jasa', 'Material', 'Kimia', 'Lainnya']
 export const UNITS = ['pcs', 'gr', 'box', 'kg', 'ltr', 'mm', 'ml', 'pail']
+export const CRO_LEVELS = ['CRO I', 'CRO II', 'CRO III', 'CRO IV', 'CRO V', 'CRO VI', 'CRO VII', 'CRO VIII', 'CRO IX', 'CRO X']
 
 /* ---------- data demo ---------- */
 function rng(seed) {
@@ -129,7 +130,7 @@ function seedData() {
 }
 
 function defaultSettings() {
-  return { company: 'cakaba', taxRate: 11, openingBalance: 50000000, theme: 'light' }
+  return { company: 'Usaha Saya', taxRate: 11, openingBalance: 50000000, theme: 'light' }
 }
 
 /* ---------- state ---------- */

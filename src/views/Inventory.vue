@@ -4,12 +4,13 @@ import DataTable from '../components/DataTable.vue'
 import Modal from '../components/Modal.vue'
 import Icon from '../components/Icon.vue'
 import ImportModal from '../components/ImportModal.vue'
-import { store, save, remove, toast, askConfirm, PRODUCT_CATEGORIES, UNITS } from '../store'
+import { store, save, remove, toast, askConfirm, PRODUCT_CATEGORIES, UNITS, CRO_LEVELS } from '../store'
 import { rupiah } from '../utils'
 
 const imp = ref(false)
 const q = ref('')
 const cat = ref('')
+const croF = ref('')
 const onlyLow = ref(false)
 const isLow = (p) => p.stock <= p.minStock
 
@@ -17,6 +18,7 @@ const rows = computed(() =>
   store.products.filter(
     (p) =>
       (!cat.value || p.category === cat.value) &&
+      (!croF.value || p.cro === croF.value) &&
       (!onlyLow.value || isLow(p)) &&
       (!q.value || (p.name + p.sku).toLowerCase().includes(q.value.toLowerCase())),
   ),
@@ -33,13 +35,14 @@ const stats = computed(() => ({
 const columns = [
   { key: 'name', label: 'Produk' },
   { key: 'category', label: 'Kategori' },
+  { key: 'cro', label: 'CRO', sortValue: (r) => CRO_LEVELS.indexOf(r.cro) },
   { key: 'stock', label: 'Stok', align: 'center' },
   { key: 'price', label: 'Harga satuan', align: 'center' },
   { key: 'total', label: 'Harga total', align: 'center', sortValue: (r) => r.stock * r.price },
 ]
 
 const open = ref(false)
-const blank = () => ({ sku: '', name: '', category: PRODUCT_CATEGORIES[0], unit: UNITS[0], stock: 0, minStock: 10, cost: 0, price: 0 })
+const blank = () => ({ sku: '', name: '', category: PRODUCT_CATEGORIES[0], unit: UNITS[0], stock: 0, minStock: 10, cost: 0, price: 0, cro: '' })
 const form = reactive(blank())
 const add = () => {
   Object.assign(form, blank(), { id: undefined })
@@ -89,6 +92,7 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
       <div class="row wrap" style="padding: 16px 18px">
         <div class="search"><Icon name="search" :size="16" /><input v-model="q" class="input" placeholder="Cari nama / SKU…" /></div>
         <select v-model="cat" class="select" style="width: 170px">
+        <select v-model="croF" class="select"><option value="">Semua CRO</option><option v-for="c in CRO_LEVELS" :key="c" :value="c">{{ c }}</option></select>
           <option value="">Semua kategori</option>
           <option v-for="c in PRODUCT_CATEGORIES" :key="c">{{ c }}</option>
         </select>
@@ -105,6 +109,7 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
           </div>
         </template>
         <template #cell-category="{ value }"><span class="badge plain">{{ value }}</span></template>
+        <template #cell-cro="{ value }"><span v-if="value" class="badge plain">{{ value }}</span><span v-else class="muted">-</span></template>
         <template #cell-stock="{ row }">
           <div class="row" style="gap: 10px">
             <button class="icon-btn" style="width: 26px; height: 26px; font-size: 17px; line-height: 1" aria-label="Kurangi" @click="adjust(row, -1)">−</button>
@@ -135,6 +140,7 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
          <div class="field"><label>Satuan</label><select v-model="form.unit" class="select"><option v-for="u in UNITS" :key="u">{{ u }}</option></select></div>
         <div class="field"><label>Batas minimum</label><input v-model.number="form.minStock" type="number" min="0" class="input" /></div>
         <div class="field"><label>Harga satuan (Rp)</label><input v-model.number="form.price" type="number" min="0" class="input" /></div>
+        <div class="field"><label>CRO</label><select v-model="form.cro" class="select"><option value="">— Pilih —</option><option v-for="c in CRO_LEVELS" :key="c" :value="c">{{ c }}</option></select></div>
       </form>
       <template #footer>
         <button class="btn" @click="open = false">Batal</button>
