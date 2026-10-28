@@ -41,6 +41,7 @@ function toCro(v) {
   if (!s) return ''
   const i = /^\d+$/.test(s) ? Number(s) - 1 : ROMAN.indexOf(s)
   return i >= 0 && i < CRO_LEVELS.length ? CRO_LEVELS[i] : null
+  const prodKey = (p) => [p.name, p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase()
 }
 /* ---------- skema per jenis data ---------- */
 export const SCHEMAS = {
@@ -154,10 +155,10 @@ export const SCHEMAS = {
       }
       const pks = matchList(r.pks, PKS_LIST) || ''
       if (text(r.pks) && !pks) warnings.push(`PKS "${text(r.pks)}" tidak dikenal → dikosongkan`)
-      const key = [sku, cro, pks].join('|').toLowerCase()
+      const key = prodKey({ name, sku, cro, pks })
       if (sku && ctx.seen.has(key)) return { item: null, skip: 'Baris dobel di file (SKU + CRO + PKS sama), dilewati' }
       ctx.seen.add(key)
-      const exists = store.products.some((p) => [p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase() === key)
+      const exists = store.products.some((p) => prodKey(p) === key)
       if (exists) warnings.push('Sudah ada → diperbarui')
       return { item: { sku, name, category, cro, pks, stock, unit, price }, errors, warnings }
     },
@@ -165,8 +166,8 @@ export const SCHEMAS = {
       let added = 0
       let updated = 0
       for (const it of items) {
-        const key = [it.sku, it.cro, it.pks].join('|').toLowerCase()
-        const ex = store.products.find((p) => [p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase() === key)
+        const key = prodKey(it)
+        const ex = store.products.find((p) => prodKey(p) === key)
         if (ex) (Object.assign(ex, it), updated++)
         else (store.products.unshift({ id: uid('p'), minStock: 10, ...it }), added++)
       }

@@ -57,7 +57,7 @@ const edit = (p) => {
 }
 function submit() {
   if (!form.name.trim() || !form.sku.trim()) return toast('Nama dan SKU wajib diisi', 'error')
-  if (store.products.some((p) => p.sku === form.sku && (p.cro || '') === (form.cro || '') && (p.pks || '') === (form.pks || '') && p.id !== form.id)) return toast('Produk dengan SKU, CRO, dan PKS yang sama sudah ada', 'error')
+    if (store.products.some((p) => p.name.trim().toLowerCase() === form.name.trim().toLowerCase() && p.sku === form.sku && (p.cro || '') === (form.cro || '') && (p.pks || '') === (form.pks || '') && p.id !== form.id)) return toast('Produk yang sama (nama, SKU, CRO, PKS) sudah ada', 'error')
   const isNew = !form.id
   save('products', { ...form })
   open.value = false
