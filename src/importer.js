@@ -1,4 +1,4 @@
-import { store, ACCOUNTS, INCOME_CATEGORIES, EXPENSE_CATEGORIES, PRODUCT_CATEGORIES } from './store'
+import { store, ACCOUNTS, INCOME_CATEGORIES, EXPENSE_CATEGORIES, PRODUCT_CATEGORIES, UNITS, CRO_LEVELS, PKS_LIST } from './store'
 import { uid } from './utils'
 
 const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -35,7 +35,13 @@ function toDate(v) {
 }
 
 const matchList = (v, list) => list.find((x) => norm(x) === norm(v))
-
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+function toCro(v) {
+  const s = text(v).toUpperCase().replace(/^CRO[\s-]*/, '').trim()
+  if (!s) return ''
+  const i = /^\d+$/.test(s) ? Number(s) - 1 : ROMAN.indexOf(s)
+  return i >= 0 && i < CRO_LEVELS.length ? CRO_LEVELS[i] : null
+}
 /* ---------- skema per jenis data ---------- */
 export const SCHEMAS = {
   transactions: {
@@ -94,24 +100,25 @@ export const SCHEMAS = {
     previewHead: ['Tanggal', 'Jenis', 'Keterangan', 'Jumlah'],
   },
 
-  products: {
+    products: {
     label: 'Produk',
     columns: {
-      sku: { label: 'SKU', aliases: ['sku', 'kode', 'kodebarang'], required: true },
       name: { label: 'Nama', aliases: ['nama', 'namaproduk', 'produk', 'name', 'namabarang'], required: true },
+      sku: { label: 'SKU', aliases: ['sku', 'kode', 'kodebarang'], required: true },
       category: { label: 'Kategori', aliases: ['kategori', 'category'] },
+      cro: { label: 'CRO', aliases: ['cro'] },
+      pks: { label: 'PKS', aliases: ['pks', 'namapks'] },
       stock: { label: 'Stok', aliases: ['stok', 'stock', 'qty', 'jumlah'] },
       unit: { label: 'Satuan', aliases: ['satuan', 'unit', 'uom'] },
-      minStock: { label: 'Min. Stok', aliases: ['minstok', 'batasminimum', 'minimum', 'minstock'] },
-      cost: { label: 'Harga Beli', aliases: ['hargabeli', 'hpp', 'cost', 'modal'] },
-      price: { label: 'Harga Total', aliases: ['hargajual', 'harga', 'price'] },
+      price: { label: 'Harga Satuan', aliases: ['hargasatuan', 'harga', 'hargajual', 'price'] },
+      total: { label: 'Harga Total', aliases: ['hargatotal', 'total'] },
     },
     sample: [
-      ['SKU', 'Nama', 'Kategori', 'Stok', 'Min. Stok', 'Harga Beli', 'Harga Total'],
-      ['AKS-010', 'Mouse Gaming', 'Aksesoris', 25, 10, 150000, 225000],
-      ['ELK-010', 'Speaker Bluetooth', 'Elektronik', 12, 5, 210000, 320000],
+      ['Nama', 'SKU', 'Kategori', 'CRO', 'PKS', 'Stok', 'Satuan', 'Harga Satuan', 'Harga Total'],
+      ['Eksternal', 'Contoh Barang A', 'Kimia', 'CRO I', 'CSB', 100, 'kg', 10000, 1000000],
+      ['Eksternal', 'Contoh Barang B', 'Material', 'CRO II', 'DPN', 50, 'pcs', 25000, 1250000],
     ],
-    hint: 'SKU yang sudah ada akan diperbarui (stok & harga), SKU baru ditambahkan.',
+    hint: 'Data dengan SKU + CRO + PKS yang sama akan diperbarui, selain itu ditambahkan. Harga Total dihitung otomatis (stok × harga satuan).',
     row(r, ctx) {
       const errors = []
       const warnings = []
@@ -119,43 +126,53 @@ export const SCHEMAS = {
       const name = text(r.name)
       if (!sku) errors.push('SKU kosong')
       if (!name) errors.push('Nama kosong')
-      const n = (v, label, d = 0) => {
-        if (text(v) === '') return d
+      const n = (v, label) => {
+        if (text(v) === '') return null
         const x = toNumber(v)
         if (isNaN(x) || x < 0) {
           errors.push(`${label} tidak valid`)
-          return d
+          return null
         }
         return x
       }
-      const stock = n(r.stock, 'Stok')
-      const unit = text(r.unit).toLowerCase() || 'pcs'
-      const minStock = n(r.minStock, 'Min. stok', 10)
-      const cost = n(r.cost, 'Harga beli')
-      const price = n(r.price, 'Harga total')
+      const stock = n(r.stock, 'Stok') ?? 0
+      let price = n(r.price, 'Harga satuan')
+      const total = n(r.total, 'Harga total')
+      if (price === null) price = total !== null && stock > 0 ? Math.round(total / stock) : 0
       let category = matchList(r.category, PRODUCT_CATEGORIES)
       if (!category) {
         category = PRODUCT_CATEGORIES.at(-1)
         if (text(r.category)) warnings.push(`Kategori "${text(r.category)}" tidak dikenal → ${category}`)
       }
-      if (sku && ctx.seen.has(sku.toLowerCase())) return { item: null, skip: 'SKU dobel di file, dilewati' }
-      ctx.seen.add(sku.toLowerCase())
-      const exists = store.products.some((p) => p.sku.toLowerCase() === sku.toLowerCase())
-      if (exists) warnings.push('SKU sudah ada → diperbarui')
-      return { item: { sku, name, category, unit, stock, minStock, cost, price }, errors, warnings }
+      const unit = matchList(r.unit, UNITS) || UNITS[0]
+      if (text(r.unit) && !matchList(r.unit, UNITS)) warnings.push(`Satuan "${text(r.unit)}" tidak dikenal → ${unit}`)
+      let cro = toCro(r.cro)
+      if (cro === null) {
+        warnings.push(`CRO "${text(r.cro)}" tidak dikenal → dikosongkan`)
+        cro = ''
+      }
+      const pks = matchList(r.pks, PKS_LIST) || ''
+      if (text(r.pks) && !pks) warnings.push(`PKS "${text(r.pks)}" tidak dikenal → dikosongkan`)
+      const key = [sku, cro, pks].join('|').toLowerCase()
+      if (sku && ctx.seen.has(key)) return { item: null, skip: 'Baris dobel di file (SKU + CRO + PKS sama), dilewati' }
+      ctx.seen.add(key)
+      const exists = store.products.some((p) => [p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase() === key)
+      if (exists) warnings.push('Sudah ada → diperbarui')
+      return { item: { sku, name, category, cro, pks, stock, unit, price }, errors, warnings }
     },
     commit(items) {
       let added = 0
       let updated = 0
       for (const it of items) {
-        const ex = store.products.find((p) => p.sku.toLowerCase() === it.sku.toLowerCase())
+        const key = [it.sku, it.cro, it.pks].join('|').toLowerCase()
+        const ex = store.products.find((p) => [p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase() === key)
         if (ex) (Object.assign(ex, it), updated++)
-        else (store.products.unshift({ id: uid('p'), ...it }), added++)
+        else (store.products.unshift({ id: uid('p'), minStock: 10, ...it }), added++)
       }
       return { added, updated }
     },
-    preview: (i) => [i.sku, i.name, i.stock, i.price.toLocaleString('id-ID')],
-    previewHead: ['SKU', 'Nama', 'Stok', 'Harga total'],
+    preview: (i) => [i.sku, i.name, i.cro || '-', i.pks || '-', i.stock, i.price.toLocaleString('id-ID')],
+    previewHead: ['SKU', 'Nama', 'CRO', 'PKS', 'Stok', 'Harga satuan'],
   },
 
   contacts: {
