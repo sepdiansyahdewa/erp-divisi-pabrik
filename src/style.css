@@ -790,3 +790,11 @@ textarea.input {
     transition-duration: 0.01ms !important;
   }
 }
+
+html.viewer .btn.primary,
+html.viewer .icon-btn[aria-label='Edit'],
+html.viewer .icon-btn[aria-label='Hapus'],
+html.viewer .icon-btn[aria-label='Kurangi'],
+html.viewer .icon-btn[aria-label='Tambah'] {
+  display: none !important;
+}

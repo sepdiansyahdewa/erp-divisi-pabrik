@@ -11,19 +11,16 @@ const error = ref('')
 const shake = ref(false)
 const loading = ref(false)
  
-function submit() {
+async function submit() {
   error.value = ''
   loading.value = true
-  // jeda singkat agar terasa halus dan memperlambat tebak-tebakan
-  setTimeout(() => {
-    const r = login(username.value, password.value)
-    loading.value = false
-    if (!r.ok) {
-      error.value = r.error
-      shake.value = true
-      setTimeout(() => (shake.value = false), 450)
-    } else location.hash = 'dashboard'
-  }, 450)
+  const r = await login(username.value, password.value)
+  loading.value = false
+  if (!r.ok) {
+    error.value = r.error
+    shake.value = true
+    setTimeout(() => (shake.value = false), 450)
+  } else location.hash = 'dashboard'
 }
 const fill = (u, p) => {
   username.value = u
@@ -61,8 +58,8 @@ const fill = (u, p) => {
         <p class="sub">Selamat datang di {{ store.settings.company }}.</p>
  
         <div class="field">
-          <label for="u">Username</label>
-          <input id="u" v-model="username" class="in" autocomplete="username" autofocus placeholder="Username" />
+          <label for="u">Email</label>
+          <input id="u" v-model="username" class="in" type="email" autocomplete="username" autofocus placeholder="nama@email.com" />
         </div>
         <div class="field">
           <label for="p">Password</label>
@@ -79,15 +76,8 @@ const fill = (u, p) => {
         <button class="go" :disabled="loading || !username || !password">
           {{ loading ? 'Memeriksa…' : 'MASUK' }}
         </button>
- 
-        <div class="demo">
-          <span>Akun demo:</span>
-          <button type="button" class="chip" @click="fill('admin', 'admin123')">Pemilik</button>
-          <button type="button" class="chip" @click="fill('kasir', 'kasir123')">Kasir</button>
-        </div>
       </form>
     </main>
- 
     <footer class="bottom">
       <span class="dot"></span>
       <b>STATUS</b>

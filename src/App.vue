@@ -10,6 +10,7 @@ import Contacts from './views/Contacts.vue'
 import Reports from './views/Reports.vue'
 import Settings from './views/Settings.vue'
 import Login from './views/Login.vue'
+import CloudBar from './components/CloudBar.vue'
 import { user, logout, ROLES } from './auth'
 import { store, ui, invoiceStatus } from './store'
 
@@ -110,6 +111,7 @@ const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'nu
       </header>
 
       <main class="content">
+        <CloudBar />
         <Transition name="page" mode="out-in">
           <component :is="current.view" :key="current.id" />
         </Transition>

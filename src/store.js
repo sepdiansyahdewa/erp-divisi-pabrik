@@ -135,29 +135,30 @@ function defaultSettings() {
 }
 
 /* ---------- state ---------- */
-function load() {
+function savedTheme() {
   try {
-    const raw = localStorage.getItem(KEY)
-    if (raw) {
-      const d = JSON.parse(raw)
-      // pakai data tersimpan hanya jika strukturnya lengkap
-      if (['transactions', 'invoices', 'products', 'contacts'].every((k) => Array.isArray(d[k]))) return d
-    }
-  } catch {}
-  return seedData()
+    return localStorage.getItem('erp-theme') || 'light'
+  } catch {
+    return 'light'
+  }
 }
 
-export const store = reactive(load())
-store.settings = { ...defaultSettings(), ...store.settings }
+export const store = reactive({
+  transactions: [],
+  invoices: [],
+  products: [],
+  contacts: [],
+  settings: { ...defaultSettings(), theme: savedTheme() },
+})
 
+// tema disimpan per perangkat
 watch(
-  store,
-  () => {
+  () => store.settings.theme,
+  (t) => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(store))
+      localStorage.setItem('erp-theme', t)
     } catch {}
   },
-  { deep: true },
 )
 
 /* ---------- toast & confirm ---------- */
