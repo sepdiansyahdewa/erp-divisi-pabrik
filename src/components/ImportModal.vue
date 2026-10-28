@@ -70,7 +70,7 @@ const onPick = (e) => {
 }
 
 function template() {
-  downloadFile(`template-${schema.value.label.toLowerCase()}.xlsx`, writeXlsx(schema.value.sample, schema.value.label), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  downloadFile(`template-${schema.value.label.toLowerCase()}.xlsx`, writeXlsx(schema.value.sample, schema.value.label, schema.value.xlsx), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 }
 
 function submit() {

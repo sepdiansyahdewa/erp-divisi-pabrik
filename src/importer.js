@@ -102,6 +102,7 @@ export const SCHEMAS = {
 
     products: {
     label: 'Produk',
+      xlsx: { center: true, money: [7, 8] },
     columns: {
       name: { label: 'Nama', aliases: ['nama', 'namaproduk', 'produk', 'name', 'namabarang'], required: true },
       sku: { label: 'SKU', aliases: ['sku', 'kode', 'kodebarang'], required: true },
