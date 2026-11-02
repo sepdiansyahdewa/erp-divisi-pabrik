@@ -104,24 +104,25 @@ export const SCHEMAS = {
 
     products: {
     label: 'Produk',
-      xlsx: { center: true, money: [7, 8] },
+    xlsx: { center: true, money: [8, 9], text: [5] },
     columns: {
       name: { label: 'Nama', aliases: ['nama', 'namaproduk', 'produk', 'name', 'namabarang'], required: true },
       sku: { label: 'SKU', aliases: ['sku', 'kode', 'kodebarang'], required: true },
       category: { label: 'Kategori', aliases: ['kategori', 'category'] },
       cro: { label: 'CRO', aliases: ['cro'] },
       pks: { label: 'PKS', aliases: ['pks', 'namapks'] },
+      mrn: { label: 'Material Request Number', aliases: ['materialrequestnumber', 'materialrequest', 'mrn', 'nomormaterial', 'materialnumber', 'nomormaterialrequest'] },
       stock: { label: 'Stok', aliases: ['stok', 'stock', 'qty', 'jumlah'] },
       unit: { label: 'Satuan', aliases: ['satuan', 'unit', 'uom'] },
       price: { label: 'Harga Satuan', aliases: ['hargasatuan', 'harga', 'hargajual', 'price'] },
       total: { label: 'Harga Total', aliases: ['hargatotal', 'total'] },
     },
     sample: [
-      ['Nama', 'SKU', 'Kategori', 'CRO', 'PKS', 'Stok', 'Satuan', 'Harga Satuan', 'Harga Total'],
-      ['Eksternal', 'Contoh Barang A', 'Kimia', 'CRO I', 'CSB', 100, 'kg', 10000, 1000000],
-      ['Eksternal', 'Contoh Barang B', 'Material', 'CRO II', 'DPN', 50, 'pcs', 25000, 1250000],
+      ['Nama', 'SKU', 'Kategori', 'CRO', 'PKS', 'Material Request Number', 'Stok', 'Satuan', 'Harga Satuan', 'Harga Total'],
+      ['Eksternal', 'Contoh Barang A', 'Kimia', 'CRO I', 'CSB', '048952442', 100, 'kg', 10000, 1000000],
+      ['Eksternal', 'Contoh Barang B', 'Material', 'CRO II', 'DPN', '', 50, 'pcs', 25000, 1250000],
     ],
-    hint: 'Data dengan SKU + CRO + PKS yang sama akan diperbarui, selain itu ditambahkan. Harga Total dihitung otomatis (stok × harga satuan).',
+    hint: 'Data dengan Nama + SKU + CRO + PKS yang sama akan diperbarui, selain itu ditambahkan. Material Request Number otomatis diterapkan ke semua produk dengan Nama + SKU yang sama. Harga Total dihitung otomatis (stok × harga satuan).',
     row(r, ctx) {
       const errors = []
       const warnings = []
@@ -156,26 +157,40 @@ export const SCHEMAS = {
       }
       const pks = matchList(r.pks, PKS_LIST) || ''
       if (text(r.pks) && !pks) warnings.push(`PKS "${text(r.pks)}" tidak dikenal → dikosongkan`)
+      const mrn = text(r.mrn)
       const key = prodKey({ name, sku, cro, pks })
-      if (sku && ctx.seen.has(key)) return { item: null, skip: 'Baris dobel di file (SKU + CRO + PKS sama), dilewati' }
+      if (sku && ctx.seen.has(key)) return { item: null, skip: 'Baris dobel di file (Nama + SKU + CRO + PKS sama), dilewati' }
       ctx.seen.add(key)
       const exists = store.products.some((p) => prodKey(p) === key)
       if (exists) warnings.push('Sudah ada → diperbarui')
-      return { item: { sku, name, category, cro, pks, stock, unit, price }, errors, warnings }
+      return { item: { sku, name, category, cro, pks, mrn, stock, unit, price }, errors, warnings }
     },
     commit(items) {
       let added = 0
       let updated = 0
+      const same = (a, b) => nk(a.name) === nk(b.name) && nk(a.sku) === nk(b.sku)
       for (const it of items) {
+        const { mrn, ...rest } = it // MRN diurus terpisah supaya baris tanpa MRN tidak menghapus MRN yang sudah ada
         const key = prodKey(it)
         const ex = store.products.find((p) => prodKey(p) === key)
-        if (ex) (Object.assign(ex, it), updated++)
-        else (store.products.unshift({ id: uid('p'), minStock: 10, ...it }), added++)
+        let target
+        if (ex) {
+          Object.assign(ex, rest)
+          target = ex
+          updated++
+        } else {
+          store.products.unshift({ id: uid('p'), minStock: 10, ...rest })
+          target = store.products[0]
+          added++
+        }
+        // MRN: ada di file -> samakan ke semua produk bernama + SKU sama; kosong -> ikut MRN yang sudah ada
+        if (mrn) store.products.forEach((p) => same(p, it) && p.mrn !== mrn && (p.mrn = mrn))
+        else if (!target.mrn) target.mrn = store.products.find((p) => p.mrn && same(p, it))?.mrn || ''
       }
       return { added, updated }
     },
-    preview: (i) => [i.sku, i.name, i.cro || '-', i.pks || '-', i.stock, i.price.toLocaleString('id-ID')],
-    previewHead: ['SKU', 'Nama', 'CRO', 'PKS', 'Stok', 'Harga satuan'],
+    preview: (i) => [i.sku, i.name, i.cro || '-', i.pks || '-', i.mrn || '-', i.stock, i.price.toLocaleString('id-ID')],
+    previewHead: ['SKU', 'Nama', 'CRO', 'PKS', 'MRN', 'Stok', 'Harga satuan'],
   },
 
   contacts: {

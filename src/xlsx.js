@@ -210,9 +210,11 @@ const colName = (i) => {
 }
 
 export function writeXlsx(rows, sheetName = 'Data', opts = {}) {
-  // opts.center: semua isi kolom rata tengah; opts.money: nomor kolom (mulai 0) berformat Rupiah
+  // opts.center: semua isi kolom rata tengah; opts.money: nomor kolom (mulai 0) berformat Rupiah;
+  // opts.text: nomor kolom berformat Teks (supaya angka nol di depan, mis. 048952442, tidak hilang)
   const money = opts.money || []
-  const colStyle = (ci) => (money.includes(ci) ? 3 : opts.center ? 2 : 0)
+  const text = opts.text || []
+  const colStyle = (ci) => (text.includes(ci) ? 4 : money.includes(ci) ? 3 : opts.center ? 2 : 0)
   const width = Math.max(...rows.map((r) => r.length))
   const cols = Array.from({ length: width }, (_, i) => `<col min="${i + 1}" max="${i + 1}" width="22" customWidth="1"${colStyle(i) ? ` style="${colStyle(i)}"` : ''}/>`).join('')
   const body = rows
@@ -237,11 +239,12 @@ export function writeXlsx(rows, sheetName = 'Data', opts = {}) {
     '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>' +
     '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
     '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-    '<cellXfs count="4">' +
+    '<cellXfs count="5">' +
     '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
     '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
     '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
     '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment vertical="center"/></xf>' +
+    '<xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
     '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'
   return zipStore({
     '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',

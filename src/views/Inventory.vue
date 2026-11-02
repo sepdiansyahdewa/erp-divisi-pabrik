@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import DataTable from '../components/DataTable.vue'
 import Modal from '../components/Modal.vue'
 import Icon from '../components/Icon.vue'
@@ -14,6 +14,9 @@ const croF = ref('')
 const pksF = ref('')
 const onlyLow = ref(false)
 const isLow = (p) => p.stock <= p.minStock
+const normKey = (s) => String(s || '').trim().toLowerCase()
+const sameItem = (a, b) => normKey(a.name) === normKey(b.name) && normKey(a.sku) === normKey(b.sku)
+const mrnOf = (p) => store.products.find((x) => x.mrn && sameItem(x, p))?.mrn || ''
 
 const rows = computed(() =>
   store.products.filter(
@@ -22,7 +25,7 @@ const rows = computed(() =>
       (!croF.value || p.cro === croF.value) &&
       (!pksF.value || p.pks === pksF.value) &&
       (!onlyLow.value || isLow(p)) &&
-      (!q.value || (p.name + p.sku).toLowerCase().includes(q.value.toLowerCase())),
+      (!q.value || [p.name, p.sku, p.mrn].join(' ').toLowerCase().includes(q.value.toLowerCase())),
   ),
 )
 const num = (v) => Number(v) || 0
@@ -39,26 +42,42 @@ const columns = [
   { key: 'category', label: 'Kategori' },
   { key: 'cro', label: 'CRO', sortValue: (r) => CRO_LEVELS.indexOf(r.cro) },
   { key: 'pks', label: 'PKS' },
+  { key: 'mrn', label: 'Material Request' },
   { key: 'stock', label: 'Stok', align: 'center' },
   { key: 'price', label: 'Harga satuan', align: 'center' },
   { key: 'total', label: 'Harga total', align: 'center', sortValue: (r) => r.stock * r.price },
 ]
 
 const open = ref(false)
-const blank = () => ({ sku: '', name: '', category: PRODUCT_CATEGORIES[0], unit: UNITS[0], stock: 0, minStock: 10, cost: 0, price: 0, cro: '', pks: '' })
+const blank = () => ({ sku: '', name: '', category: PRODUCT_CATEGORIES[0], unit: UNITS[0], stock: 0, minStock: 10, cost: 0, price: 0, cro: '', pks: '', mrn: '' })
 const form = reactive(blank())
+let autoMrn = ''
+watch(() => [form.name, form.sku], () => {
+  if (form.id) return
+  const cur = String(form.mrn || '').trim()
+  if (cur && cur !== autoMrn) return
+  form.mrn = autoMrn = mrnOf(form)
+})
 const add = () => {
   Object.assign(form, blank(), { id: undefined })
   open.value = true
 }
 const edit = (p) => {
-  Object.assign(form, p)
+  Object.assign(form, p, { mrn: p.mrn || mrnOf(p) })
   open.value = true
 }
 function submit() {
   if (!form.name.trim() || !form.sku.trim()) return toast('Nama dan SKU wajib diisi', 'error')
     if (store.products.some((p) => p.name.trim().toLowerCase() === form.name.trim().toLowerCase() && p.sku === form.sku && (p.cro || '') === (form.cro || '') && (p.pks || '') === (form.pks || '') && p.id !== form.id)) return toast('Produk yang sama (nama, SKU, CRO, PKS) sudah ada', 'error')
   const isNew = !form.id
+form.mrn = String(form.mrn || '').trim()
+if (form.mrn) {
+  let n = 0
+  store.products.forEach((p) => {
+    if (p.id !== form.id && sameItem(p, form) && p.mrn !== form.mrn) { p.mrn = form.mrn; n++ }
+  })
+  if (n) toast(`MRN juga diterapkan ke ${n} produk lain dengan nama + SKU sama`)
+} else if (!form.id) form.mrn = mrnOf(form)
   save('products', { ...form })
   open.value = false
   toast(isNew ? 'Produk ditambahkan' : 'Produk diperbarui')
@@ -111,6 +130,7 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
         <template #cell-category="{ value }"><span class="badge plain">{{ value }}</span></template>
         <template #cell-cro="{ value }"><span v-if="value" class="badge plain">{{ value }}</span><span v-else class="muted">-</span></template>
         <template #cell-pks="{ value }"><span v-if="value" class="badge plain">{{ value }}</span><span v-else class="muted">-</span></template>
+        <template #cell-mrn="{ value }"><span v-if="value" class="num">{{ value }}</span><span v-else class="muted">-</span></template>
         <template #cell-stock="{ row }">
           <div class="row" style="gap: 10px">
             <button class="icon-btn" style="width: 26px; height: 26px; font-size: 17px; line-height: 1" aria-label="Kurangi" @click="adjust(row, -1)">−</button>
@@ -142,6 +162,7 @@ const margin = (p) => (p.price ? ((p.price - p.cost) / p.price) * 100 : 0)
         <div class="field"><label>Nama PKS</label><select v-model="form.pks" class="select"><option value="">— Pilih —</option><option v-for="p in PKS_LIST" :key="p" :value="p">{{ p }}</option></select></div>
         <div class="field"><label>Harga satuan (Rp)</label><input v-model.number="form.price" type="number" min="0" class="input" /></div>
         <div class="field"><label>CRO</label><select v-model="form.cro" class="select"><option value="">— Pilih —</option><option v-for="c in CRO_LEVELS" :key="c" :value="c">{{ c }}</option></select></div>
+        <div class="field"><label>Material Request Number</label><input v-model="form.mrn" class="input" placeholder="mis. 048952442" /></div>
       </form>
       <template #footer>
         <button class="btn" @click="open = false">Batal</button>
