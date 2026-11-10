@@ -42,6 +42,7 @@ function toCro(v) {
   const i = /^\d+$/.test(s) ? Number(s) - 1 : ROMAN.indexOf(s)
   return i >= 0 && i < CRO_LEVELS.length ? CRO_LEVELS[i] : null
 }
+const nk = (s) => String(s || '').trim().toLowerCase()
 const prodKey = (p) => [p.name, p.sku, p.cro || '', p.pks || ''].join('|').toLowerCase()
 
 /* ---------- skema per jenis data ---------- */
